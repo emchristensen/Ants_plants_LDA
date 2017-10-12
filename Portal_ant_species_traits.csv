@@ -1,0 +1,28 @@
+speciescode,genus,altgenus,species,altspecies,tribe,subfamily,hunting,diet_species,diet_genus,level,scientificname,altnames,IDissues
+camp fest,Camponotus,,festinatus,,Camponotini,Formicinae,,,,,Camponotus festinatus,,"Unclear if in other years this was simply labeled camp sp, or if camp sp is a different species"
+camp sp,Camponotus,,sp.,,Camponotini,Formicinae,,,,,Camponotus sp.,,
+cono bico,Dorymyrmex,Conomyrma,bicolor,,Leptomyrmecini,Dolichederinae,,living and dead insects; honeydew,,,Conomyrma bicolor,Dorymyrmex bicolor,
+cono insa,Dorymyrmex,Conomyrma,insanus,insana,Leptomyrmecini,Dolichederinae,opportunistic predator,honeydew; vertebrate carcasses,,,Conomyrma insana,Dorymyrmex insanus (in Valone and kaspari 2005),
+crem sp,Crematogaster,,sp.,,Crematogastrini,Myrmicinae,,,,,Crematogaster sp.,,
+irid prui,Forelius,Iridomyrmex,pruinosus,pruinosum,Leptomyrmecini,Dolichoderinae,general scavengers,honeydew; living and dead insects; tends Homoptera; flower nectar,,,Forelius pruinosus (Iridomyrma pruinosum),,"Prior to 1987, simply labeled Dolichoderinae, may include more than this species"
+myrm depi,Myrmecocystus,,depilis,,Lasiini,Formicinae,,living and dead insects; flower nectar; tends aphids,,,Myrmecocystus depilis,,
+myrm mexi,Myrmecocystus,,mexicanus,,Lasiini,Formicinae,nocturnal forager; not active predation,exudates from galls on oaks; cactus fruits; flower nectar; aphid exudate,,,Myrmecocystus mexicanus,,
+myrm mimi,Myrmecocystus,,mimicus,,Lasiini,Formicinae,daytime foraging and hunting,living and dead insects; flower nectar; tends aphids,,,Myrmecocystus mimicus,,"Prior to 1982, counts included all myrm mimi and myrm depi"
+myrm nava,Myrmecocystus,,navajo,,Lasiini,Formicinae,nocturnal forager,,,,Myrmecocystus navajo,,
+novo cock,Novomessor,,cockerelli,,Stenammini,Myrmicinae,"forages during ""cool parts of the day/year""","omnivorous; insects, parts of plants, seeds",,,Novomessor cockerelli,,
+novo sp,Novomessor,,sp.,,Stenammini,Myrmicinae,,,,,Novomessor sp.,,
+phei dese,Pheidole,,desertorum,,Attini,Myrmicinae,aggressive predator and scavenger,"highly carnivorous, very few seeds","termites,seeds",genera,Pheidole desertorum,,
+phei mili,Pheidole,,militicida,,Attini,Myrmicinae,,highly granivorous,"termites,seeds",genera,Pheidole militicida,,
+phei sp,Pheidole,,sp.,,Attini,Myrmicinae,,,"termites,seeds",genera,Pheidole sp,,
+phei sita,Pheidole,,soritis,sitarches,Attini,Myrmicinae,,,"termites,seeds",genera,Pheidole sitarches,,
+phei xero,Pheidole,,xerophila,,Attini,Myrmicinae,,harvests seeds,"termites,seeds",genera,Pheidole xerophila,,
+phei yell,Pheidole,,sp.,,Attini,Myrmicinae,,,"termites,seeds",genera,"Pheidole sp ""yellow""",,No further description
+pogo barb,Pogonomyrmex,,barbatus,,Pogonomyrmecini,Myrmicinae,,,seeds,genera,Pogonomyrmex barbatus,,
+pogo dese,Pogonomyrmex,,desertorum,,Pogonomyrmecini,Myrmicinae,,seeds,seeds,genera,Pogonomyrmex desertorum,,
+pogo imbe,Pogonomyrmex,,imberbiculus,,Pogonomyrmecini,Myrmicinae,single forager,specialize on grass seeds; dead insects,seeds,genera,Pogonomyrmex imberbiculus,,
+pogo mari,Pogonomyrmex,,maricopa,,Pogonomyrmecini,Myrmicinae,single forager,"seeds, excrement, dead insects",seeds,genera,Pogonomyrmex maricopa,,
+pogo pima,Pogonomyrmex,,pima,,Pogonomyrmecini,Myrmicinae,,mostly seeds; some dead insects,seeds,genera,Pogonomyrmex pima,,
+pogo rugo,Pogonomyrmex,,rugosus,,Pogonomyrmecini,Myrmicinae,,mostly seeds; some dead insects,seeds,genera,Pogonomyrmex rugosus,,
+sole sp,Solenopsis,,sp.,,Solenopsidini,Myrmicinae,,,ant brood,genera,Solenopsis sp.,,
+sole xylo,Solenopsis,,xyloni,,Solenopsidini,Myrmicinae,,,ant brood,genera,Solenopsis xyloni,,
+unkn,Unknown,,unknown,,unknown,unknown,,,,,Unknown species,,Possibly contains several species within one year and plot
