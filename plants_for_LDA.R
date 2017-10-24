@@ -21,6 +21,8 @@ annual = filter(plant_list,duration=='Annual',commonname!='Unknown')
 controls = c(2,4,8,11,12,14,17,22)
 #summer = filter(dat,season=='summer', plot %in% controls, year > 1982, species %in% annual$speciescode)
 #winter = filter(dat,season=='winter', plot %in% controls, year > 1982, species %in% annual$speciescode)
+
+# perennials may or may not have been reliably censused pre-1989
 perenn = filter(dat, plot %in% controls, year > 1988, species %in% perennial$speciescode)
 # I can use earlier data if I restrict the quadrats: 1981-1982 only did 8 quads per plot
 summer = filter(dat,season=='summer', plot %in% controls, quadrat %in% c(13,15,31,37,51,57,73,75), species %in% annual$speciescode)
@@ -51,7 +53,7 @@ perenn_table = perenn_table[order(perenn_table$year),-1]
 # ===========================================================================================
 # LDA perennials
 
-seeds = 2 #*seq(20)
+seeds = 2*seq(20)
 
 # repeat LDA model fit and AIC calculation with a bunch of different seeds to test robustness of the analysis
 best_ntopic = repeat_VEM(perenn_table,
