@@ -51,13 +51,14 @@ perenn_table = perenn_table[order(perenn_table$year),-1]
 # ===========================================================================================
 # LDA perennials
 
-seeds = 2*seq(20)
+seeds = 2 #*seq(20)
 
 # repeat LDA model fit and AIC calculation with a bunch of different seeds to test robustness of the analysis
 best_ntopic = repeat_VEM(perenn_table,
                          seeds,
                          topic_min=2,
                          topic_max=24)
+best_ntopic
 
 SEED = 2
 ntopics = 4
@@ -72,7 +73,7 @@ commun.spp=z$term
 # look at what's in the groups
 structure(round(exp(ldamodel@beta), 3), dimnames = list(NULL, ldamodel@terms))
 
-dates = c(1988:2009,2011:2017)
+dates = c(1989:2009,2011:2017)
 
 plot_component_communities(ldamodel,ntopics,dates)
 
