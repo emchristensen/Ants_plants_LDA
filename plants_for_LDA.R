@@ -1,14 +1,17 @@
 # 
 
 library(dplyr)
+library(RCurl)
 #reshape
 
 source('../Extreme-Events-LDA/AIC_model_selection.R')
 source('LDA_figure_scripts_antsplants.R')
 
 
-dat = read.csv("C:/Users/EC/Desktop/git/PortalData/Plants/Portal_plant_quadrats.csv",stringsAsFactors = F)
-plant_list = read.csv('C:/Users/EC/Desktop/git/PortalData/Plants/Portal_plant_species.csv',stringsAsFactors = F)
+dat = read.csv(text=getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Plants/Portal_plant_quadrats.csv"),
+               stringsAsFactors = FALSE)
+plant_list = read.csv(text=getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Plants/Portal_plant_species.csv"),
+                      stringsAsFactors = FALSE)
 
 # filter out unknown species
 perennial = filter(plant_list,duration=='Perennial',commonname!='Unknown')
