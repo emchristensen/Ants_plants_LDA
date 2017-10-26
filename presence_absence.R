@@ -3,12 +3,14 @@
 
 library(dplyr)
 library(RCurl)
+library(portalr)
 
-source('ant_data_summaries.R')
+#source('ant_data_summaries.R')
 
-colony_presence = colony_presence_absence(level='Site',rare_sp=T)
+colony_presence = colony_presence_absence(level='Plot',rare_sp=T)
+colony_presence1 = filter(colony_presence,year==1985)
 
-test = reshape(colony_presence,idvar='year',timevar='species',direction='wide')
+test = reshape(colony_presence1,idvar='plot',timevar='species',direction='wide')
 
 # ==============================
 # how does this compare to presence/absence of bait data
@@ -19,3 +21,4 @@ B = filter(baitpresence,year==1990)
 
 setdiff(A,B)
 setdiff(B,A)
+
