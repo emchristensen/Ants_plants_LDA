@@ -22,10 +22,6 @@ source('../Extreme-events-LDA/LDA-distance.R')
 
 # ===================================================================
 # prepare ant data
-#dat = ant_colony_table(1977,2009,c(1,2,5,6,7,9,11,14,15,16,18,21,22))
-#dat_openings = ant_opening_table(1977,2009,c(1,2,5,6,7,9,11,14,15,16,18,21,22))
-#dat_abund = ant_bait_table(1977,2009,c(1,2,5,6,7,9,11,14,15,16,18,21,22))
-
 dat = read.csv('Ant_colony_numstakes.csv',as.is=T)
 dat$date = substr(dat$index,1,4) %>% as.numeric()
 dat = dat %>% select(-index)
