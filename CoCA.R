@@ -1,15 +1,17 @@
-############################################################################################################
-################# Co-Correspondence Analysis of Ant, Plant, and Rodent data (two at a time) ################
-## Finds patterns between two species matrices or uses one species matrix to attempt to predict the other ##
-#################################### Joan Meiners, November 2017 ###########################################
+#######################################################################
+### Co-Correspondence Analysis: Ant, Plant, & Rodents (2 at a time) ###
+########## Finds patterns between two species matrices or uses ########
+########## one species matrix to attempt to predict the other #########
+###################### Joan Meiners, November 2017 ####################
 
 library(cocorresp)
 
-## load data 
+## load rodent data -- abundances in each of 4 control plots in July census 1977-2009
 rodents = read.csv("Rodent_julys.csv", header = TRUE, row.names = 1)
 dim(rodents)
 View(rodents)
 
+## load ant data -- # stakes presence/absence in annual (July) census of 4 control plots 1977-2009
 ants = read.csv("Ant_colony_numstakes.csv", header = TRUE, row.names = 1)
 dim(ants)
 View(ants)
