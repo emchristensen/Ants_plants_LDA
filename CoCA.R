@@ -22,18 +22,6 @@ View(ants)
 ## remove row from ant data because no matching row in rodent data
 ants = ants[row.names(ants) != '1985-22',]
 
-# ## alternatively to command above, add row of zeros to rodent data for 1985-22 census
-# topdata = as.data.frame(rodents[1:34,,drop=FALSE])
-# bottomdata = as.data.frame(rodents[35:nrow(rodents),,drop=FALSE])
-# df = data.frame(matrix(ncol = 14, nrow = 1))
-# x = c(colnames(rodents))
-# colnames(df) = x
-# rownames(df) = "1985-22"
-# d = rbind(topdata, df, bottomdata)
-# d[is.na(d)] <- 0
-# View(d)
-# rodents = d
-
 
 ## SYMMETRIC COCA
 ## First try in rodent-ant order
@@ -56,16 +44,7 @@ summary(ant.rod.sym)
 plot(ant.rod.sym)
 title("Log(Ants):Rodents July Symmetric CoCA")
 
-
-## Print plots side by side
-quartz(width = 10, height = 6)
-par(mfrow=c(1,2))
-plot(rod.ant.sym)
-title("Log(Rodents):Ants July Symmetric CoCA")
-plot(ant.rod.sym)
-title("Log(Ants):Rodents July Symmetric CoCA")
-
-## another try from the plot.symcoca documentation (produces similar plot to above, just centered and labeled differently--and only uses rodent log-transformed data)
+## plot rodent and ant influences on each other side by side (still unclear exactly how to interpret this)
 quartz(width = 10, height = 6)
 layout(matrix(1:2, ncol = 2))
 plot(rod.ant.sym, which = "response", main = "Rodents", display = "species")
