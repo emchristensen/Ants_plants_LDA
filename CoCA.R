@@ -65,6 +65,25 @@ title("Log(Rodents):Ants July Symmetric CoCA")
 plot(ant.rod.sym)
 title("Log(Ants):Rodents July Symmetric CoCA")
 
+## another try from the plot.symcoca documentation (produces similar plot to above, just centered and labeled differently--and only uses rodent log-transformed data)
+quartz(width = 10, height = 6)
+layout(matrix(1:2, ncol = 2))
+plot(rod.ant.sym, which = "response", main = "Rodents", display = "species")
+plot(rod.ant.sym, which = "predictor", main = "Ants", display = "species")
+layout(1)
+
+# same as above showing sites instead of species
+quartz(width = 10, height = 6)
+layout(matrix(1:2, ncol = 2))
+plot(rod.ant.sym, which = "response", main = "Rodents", display = "sites", type = "text")
+plot(rod.ant.sym, which = "predictor", main = "Ants", display = "sites", type = "text")
+layout(1)
+
+
+## Plot interpretation notes:
+# the closer things are to origin, the less distinct they are (probably), so the second plot above tells us less than the first
+
+
 
 ## PREDICTIVE COCA using SIMPLS and formula interface
 ra.pred = coca(rodents ~ ., data = ants)
