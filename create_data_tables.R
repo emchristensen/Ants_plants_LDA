@@ -37,7 +37,7 @@ write.csv(rod_table,'Rodent_julys.csv',row.names=F)
 # ===========================
 # rodents; average sp comp per plot, averaged over 4 summer months
 rodents = abundance('..',level='Plot',time='date',shape='flat',incomplete=T)
-rodent_control = filter(rodents,plot %in% c(2,11,14,22))
+rodent_control = filter(rodents,plot %in% c(2,11,14,22),year %in% c(1977:1986,1988:1994,1998:2009))
 rodent_control$month = format(rodent_control$censusdate,'%m')
 rodent_control$year = format(rodent_control$censusdate,'%Y')
 rodent_control$summer = rep(NA)
@@ -69,7 +69,7 @@ write.csv(rodent_summer_table,'Rodent_summer_avg.csv',row.names=F)
 # ===========================
 # rodents; average sp comp per plot, averaged over whole year
 rodents = abundance('..',level='Plot',time='date',shape='flat',incomplete=T)
-rodent_control = filter(rodents,plot %in% c(2,11,14,22))
+rodent_control = filter(rodents,plot %in% c(2,11,14,22),year %in% c(1977:1986,1988:1994,1998:2009))
 rodent_control$year = format(rodent_control$censusdate,'%Y')
 rodent_control = filter(rodent_control,year<2010)
 
@@ -120,4 +120,4 @@ write.csv(dat_table,'Ant_colony_numstakes.csv',row.names=F)
 
 
 # ======================
-# plants: stake level presence --WIP
+# plants: 
