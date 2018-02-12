@@ -16,7 +16,21 @@ ants = read.csv("Ant_colony_numstakes.csv", header = TRUE, row.names = 1)
 dim(ants)
 View(ants)
 
+## remove row from ant data because no matching row in rodent data
 ants = ants[row.names(ants) != '1985-22',]
+
+## alternatively to command above, add row of zeros to rodent data for 1985-22 census
+topdata = as.data.frame(rodents[1:34,,drop=FALSE])
+bottomdata = as.data.frame(rodents[35:nrow(rodents),,drop=FALSE])
+df = data.frame(matrix(ncol = 14, nrow = 1))
+x = c(colnames(rodents))
+colnames(df) = x
+rownames(df) = "1985-22"
+d = rbind(topdata, df, bottomdata)
+d[is.na(d)] <- 0
+View(d)
+rodents = d
+
 
 # plants = 
 
