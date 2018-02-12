@@ -4,7 +4,7 @@ library(RCurl)
 library(portalr)
 
 
-# ====================
+# =======================================================================================================
 # rodents
 rodents = read.csv(text=getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/Portal_rodent.csv"),
                    na.strings=c(""), colClasses=c('tag'='character'), stringsAsFactors = FALSE)
@@ -17,33 +17,38 @@ rod = filter(rodents, period %in% Julys,
              year %in% c(1977:1986,1988:1994,1998:2009))
 rod$x = rep(1)
 
-rod_byplot = aggregate(rod$x,by=list(year = rod$year, plot = rod$plot, species = rod$species),FUN=sum)
+rod_byplot = aggregate(rod$x,by=list(year = rod$year, 
+                                     plot = rod$plot, 
+                                     species = rod$species),FUN=sum)
 rod_byplot$index = paste(rod_byplot$year,rod_byplot$plot,sep='-')
 
 rod_dat = select(rod_byplot,index,species,x)
-rod_table = reshape(rod_dat,idvar='index',timevar='species',direction='wide')
+rod_table = make_crosstab(rod_dat,variable_name = 'x')
 rod_table[is.na(rod_table)] = 0
 
 # remove species that have only one capture ever -- so extremely rare species don't have too much influence on results
-rod_table = rod_table[,!names(rod_table) %in% c('x.PL','x.SF')]
+rod_table = rod_table[,!names(rod_table) %in% c('PL','SF')]
 
 # add row of zeros for plot 22 1985
+plt221985 = c('1985-22',rep(0,14))
+rod_table = rbind(rod_table,plt221985)
 
 # put rows in order
 rod_table = rod_table[order(rod_table$index),]
 
-write.csv(rod_table,'Rodent_julys.csv',row.names=F)
+
+write.csv(rod_table,'Rodent_julys.csv',row.names=F,quote=F)
 
 # ===========================
 # rodents; average sp comp per plot, averaged over 4 summer months
 rodents = abundance('..',level='Plot',time='date',shape='flat',incomplete=T)
-rodent_control = filter(rodents,plot %in% c(2,11,14,22),year %in% c(1977:1986,1988:1994,1998:2009))
+rodent_control = filter(rodents,plot %in% c(2,11,14,22))
 rodent_control$month = format(rodent_control$censusdate,'%m')
 rodent_control$year = format(rodent_control$censusdate,'%Y')
 rodent_control$summer = rep(NA)
 rodent_control$summer[rodent_control$month %in% c('06','07','08','09')]=1
 
-rodent_summer = filter(rodent_control,summer==1)
+rodent_summer = filter(rodent_control,summer==1,year %in% c(1977:1986,1988:1994,1998:2009))
 rodent_summer_avg = aggregate(rodent_summer$abundance,by=list(plot=rodent_summer$plot,
                                                               species=rodent_summer$species,
                                                               year=rodent_summer$year),FUN=mean,na.rm=T)
@@ -69,9 +74,9 @@ write.csv(rodent_summer_table,'Rodent_summer_avg.csv',row.names=F)
 # ===========================
 # rodents; average sp comp per plot, averaged over whole year
 rodents = abundance('..',level='Plot',time='date',shape='flat',incomplete=T)
-rodent_control = filter(rodents,plot %in% c(2,11,14,22),year %in% c(1977:1986,1988:1994,1998:2009))
+rodent_control = filter(rodents,plot %in% c(2,11,14,22))
 rodent_control$year = format(rodent_control$censusdate,'%Y')
-rodent_control = filter(rodent_control,year<2010)
+rodent_control = filter(rodent_control,year %in% c(1977:1986,1988:1994,1998:2009))
 
 rodent_yr_avg = aggregate(rodent_control$abundance,by=list(plot=rodent_control$plot,
                                                               species=rodent_control$species,
@@ -94,13 +99,15 @@ rodent_yr_table = rodent_yr_table[,c(24,3:23)]
 
 write.csv(rodent_yr_table,'Rodent_yearly_avg.csv',row.names=F)
 
-# ===================
+# ====================================================================================================================
 # ants: stake level presence
 colony_stake = colony_presence_absence(level='Stake',rare_sp=T)
 
 # Only 4 plots are definitely controls with respect to ants and rodents, 1977-2009
 controls = filter(colony_stake,plot %in% c(2,11,14,22))
-control_agg = aggregate(controls$presence,by=list(year = controls$year, plot = controls$plot, species = controls$species), FUN=sum,na.rm=T)
+control_agg = aggregate(controls$presence,by=list(year = controls$year, 
+                                                  plot = controls$plot, 
+                                                  species = controls$species), FUN=sum,na.rm=T)
 control_agg$index = paste(control_agg$year,control_agg$plot,sep='-')
 
 dat = select(control_agg,index,species,x)
@@ -119,5 +126,7 @@ write.csv(dat_table,'Ant_colony_numstakes.csv',row.names=F)
 # ants: abundance; from bait data, just granivorous species
 
 
-# ======================
-# plants: 
+# ====================================================================================================================
+# plants
+
+
