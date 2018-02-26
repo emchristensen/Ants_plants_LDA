@@ -10,6 +10,7 @@ library(cocorresp)
 rodents = read.csv("Rodent_julys.csv", header = TRUE, row.names = 1)
 dim(rodents)
 View(rodents)
+rodents = subset(rodents, select= -c(x.PH)) #remove PH species column
 
 ## load ant data -- # stakes presence/absence in annual (July) census of 4 control plots 1977-2009
 ants = read.csv("Ant_colony_numstakes.csv", header = TRUE, row.names = 1)
@@ -31,6 +32,7 @@ rodents_log = log(rodents + 1)
 rod.ant.sym = coca(rodents_log ~ ., data = ants, method = "symmetric")
 rod.ant.sym
 summary(rod.ant.sym)
+screeplot(rod.ant.sym) # how many axes are necessary for ord plot (2)
 plot(rod.ant.sym)
 title("Log(Rodents):Ants July Symmetric CoCA")
 
@@ -41,10 +43,14 @@ ants_log = log(ants + 1)
 ant.rod.sym = coca(ants_log ~ ., data = rodents, method = "symmetric")
 ant.rod.sym
 summary(ant.rod.sym)
+screeplot(ant.rod.sym) # how many axes are necessary for ord plot (2-3)
 plot(ant.rod.sym)
 title("Log(Ants):Rodents July Symmetric CoCA")
 
-## plot rodent and ant influences on each other side by side (still unclear exactly how to interpret this)
+###### What does it mean that results from the two screeplots above are different? ######
+
+## plot rodent and ant influences on each other side by side 
+######### still unclear exactly how to interpret this ########
 quartz(width = 10, height = 6)
 layout(matrix(1:2, ncol = 2))
 plot(rod.ant.sym, which = "response", main = "Rodents", display = "species")
@@ -58,6 +64,21 @@ plot(rod.ant.sym, which = "response", main = "Rodents", display = "sites", type 
 plot(rod.ant.sym, which = "predictor", main = "Ants", display = "sites", type = "text")
 layout(1)
 
+## Compare reverse order for above plots
+## plot ant and rodent influences on each other side by side 
+######### still unclear exactly how to interpret this ########
+quartz(width = 10, height = 6)
+layout(matrix(1:2, ncol = 2))
+plot(ant.rod.sym, which = "response", main = "Ants", display = "species")
+plot(ant.rod.sym, which = "predictor", main = "Rodents", display = "species")
+layout(1)
+
+# same as above showing sites instead of species
+quartz(width = 10, height = 6)
+layout(matrix(1:2, ncol = 2))
+plot(ant.rod.sym, which = "response", main = "Ants", display = "sites", type = "text")
+plot(ant.rod.sym, which = "predictor", main = "Rodents", display = "sites", type = "text")
+layout(1)
 
 ## Plot interpretation notes:
 # the closer things are to origin, the less distinct they are (probably), so the second plot above tells us less than the first
