@@ -10,18 +10,28 @@ library(cocorresp)
 rodents = read.csv("Rodent_julys.csv", header = TRUE, row.names = 1)
 dim(rodents)
 View(rodents)
-rodents = subset(rodents, select= -c(x.PH)) #remove PH species column
+colSums(rodents, na.rm = FALSE, dims = 1)
+## remove species with fewer than 10 occurrences
+rodents = subset(rodents, select= -c(OL, PH, PI, RM, SH))
+## check for zero sum rows
+rowSums(rodents, na.rm=FALSE, dims = 1)
+## remove row because zero data for rodents
+rodents = rodents[row.names(rodents) != '1985-22',]
 
 ## load ant data -- # stakes presence/absence in annual (July) census of 4 control plots 1977-2009
 ants = read.csv("Ant_colony_numstakes.csv", header = TRUE, row.names = 1)
 dim(ants)
 View(ants)
-
+colSums(ants, na.rm = FALSE, dims = 1)
+## remove species with fewer than 10 occurrences
+ants = subset(ants, select= -c(x.crem.sp, x.myrm.nava, x.pogo.barb, x.pogo.mari, x.phei.mili))
+## remove row from ant data because zero data for rodents
+ants = ants[row.names(ants) != '1985-22',]
+## check for zero sum rows
+rowSums(ants, na.rm=FALSE, dims = 1)
 ## load plant data (when it's ready)
 
 
-## remove row from ant data because no matching row in rodent data
-ants = ants[row.names(ants) != '1985-22',]
 
 
 ## SYMMETRIC COCA
