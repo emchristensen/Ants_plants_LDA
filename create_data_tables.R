@@ -2,6 +2,7 @@ library(dplyr)
 library(portalr)
 library(RCurl)
 library(portalr)
+library(vegan)
 
 # ====================================================================================
 # Examples: write to csvs
@@ -73,9 +74,9 @@ rodent_table_summers = function() {
   rodent_control$summer = rep(NA)
   rodent_control$summer[rodent_control$month %in% c('06','07','08','09')]=1
   
-  rodent_summer = filter(rodent_control,summer==1,year %in% c(1977:1986,1988:1994,1998:2009))
-  rodent_summer_avg = aggregate(rodent_summer$abundance,by=list(plot=rodent_summer$plot,
-                                                                species=rodent_summer$species,
+  #rodent_summer = filter(rodent_control,summer==1,year %in% c(1977:1986,1988:1994,1998:2009))
+  rodent_summer = filter(rodent_control,summer==1)
+  rodent_summer_avg = aggregate(rodent_summer$abundance,by=list(species=rodent_summer$species,
                                                                 year=rodent_summer$year),FUN=mean,na.rm=T)
   
   rodent_summer_table = make_crosstab(rodent_summer_avg,variable_name='x')
@@ -93,6 +94,51 @@ rodent_table_summers = function() {
   # put columns in order
   rodent_summer_table = rodent_summer_table[,c(18,3:17)]
   return(rodent_summer_table)
+}
+
+#' @title rodent distance: summer only
+#' 
+#' @description extracts rodent data from summer months and long term control plots only, 
+#' creates data frame of year and community distance compared to first year (baseline)
+#' 
+#' @param selected_plots list of plots to include (long-term rodent controls 1977-2015 are 2,11,14,22)
+#' @param dist_method distance method (from vegan) to be used (default Bray-Curtis)
+#' @param remove_rare_sp T/F remove species with extremely low capture rates from analysis? -----WIP -------
+#' 
+#' @return data frame of year by distance
+#' 
+rodent_dist_summers = function(selected_plots=c(2,11,14,22),dist_method='bray',remove_rare_sp=F) {
+  rodents = abundance('..',level='Plot',time='date',shape='flat',incomplete=T)
+  rodent_control = filter(rodents,plot %in% selected_plots)
+  rodent_control$month = format(rodent_control$censusdate,'%m')
+  rodent_control$year = format(rodent_control$censusdate,'%Y')
+  rodent_control$summer = rep(NA)
+  rodent_control$summer[rodent_control$month %in% c('06','07','08','09')]=1
+  
+  rodent_summer = filter(rodent_control,summer==1, year>1977, year<2015)
+  rodent_summer_avg = aggregate(rodent_summer$abundance,by=list(species=rodent_summer$species,
+                                                                year=rodent_summer$year),FUN=mean,na.rm=T)
+  
+  rodent_summer_table = make_crosstab(rodent_summer_avg,variable_name='x')
+  
+  # remove species with very low capture rates? -- this is a WIP!!
+  if (remove_rare_sp == T) {
+    rodent_summer_table = rodent_summer_table[,!names(rodent_summer_table) %in% c('BA','PH','PI','PL','RF','RO','SO')]
+  }
+  
+  # put rows in order
+  rodent_summer_table = rodent_summer_table[order(rodent_summer_table$year),]
+  
+  # calculate distance for each year relative to first (1978)
+  rodent_distance = data.frame(yr = c(), d = c())
+  init_yr = rodent_summer_table[1,-1]
+  for (yr in rodent_summer_table$year) {
+    d = vegan::vegdist(rbind(init_yr, rodent_summer_table[rodent_summer_table$year==yr,-1]),method=dist_method)
+    rodent_distance = rbind(rodent_distance,c(as.numeric(yr),d))
+  }
+  names(rodent_distance) = c('year','dist')
+  
+  return(rodent_distance)
 }
 
 
@@ -185,27 +231,47 @@ summer_annual_byplot = function(selected_plots) {
 #' @title get winter annual plant data
 #' 
 #' @param selected_plots plot numbers: 1-24
+#' @param dist_method distance method for vegdist function (vegan package)
 #' 
 #' @return table of plant counts by species, at plot level
 #'
-winter_annual_byplot = function(selected_plots) {
+winter_annual_byplot = function(selected_plots, dist_method='bray') {
   plant_data = plant_abundance('..',level='Plot',type='Annuals',
                                correct_sp=T,unknowns=F,length='all',
                                shape='flat')
   # remove data before 1983 to avoid having to adjust by quadrat area per plot
   winter_data = filter(plant_data,season=='winter',year>1982)
   
-  # only include species occurred in >2% of samples (plots)
-  nsamples_W = select(winter_data,year,season,plot) %>% unique() %>% nrow()
+  # find species that occurred in >2% of samples (plots)
+  nsamples_W = dplyr::select(winter_data,year,season,plot) %>% unique() %>% nrow()
   sp_table_W = table(winter_data$species)
   splist_W = sp_table_W[sp_table_W > (nsamples_W * .02)] %>% names()
+  
+  # filter based on species and selected_plots
   winterplants = filter(winter_data,species %in% splist_W,plot %in% select_plots)
   wintertable = make_crosstab(winterplants,variable_name='abundance')
   wintertable[is.na(wintertable)] <- 0
   
-  return(wintertable)
+  # calculate distance for each plot
+  winter_distance = data.frame()
+  for (plt in selected_plots) {
+    plt_dat = filter(wintertable, plot==plt)
+    init_yr = plt_dat[plt_dat$year==min(plt_dat$year),-c(1:4)]
+    D=data.frame()
+    for (yr in plt_dat$year) {
+      d = vegan::vegdist(rbind(init_yr, plt_dat[plt_dat$year==yr,-c(1:4)]),method='bray')
+      D = rbind(D,c(plt,yr,d))
+    }
+    names(D) = c('plot','year','dist')
+    winter_distance = rbind(winter_distance,D)
+  }
+    return(winter_distance)
 }
 
+
+distance_timeseries = function() {
+  
+}
 
 # =====================
 # ants: abundance; from bait data, just granivorous species
