@@ -1,8 +1,6 @@
 library(dplyr)
 library(portalr)
-library(RCurl)
-library(portalr)
-library(vegan)
+#library(RCurl)
 
 # ====================================================================================
 # Examples: write to csvs
@@ -11,7 +9,7 @@ library(vegan)
 # write.csv(rod_table,'Rodent_julys.csv',row.names=F,quote=F)
 
 # rodent_summer_table = rodent_table_summers()
-# write.csv(rodent_summer_table,'Rodent_summer_avg.csv',row.names=F)
+# write.csv(rodent_summer_table,'Rodent_summer_table.csv',row.names=F)
 
 # rodent_yr_table = rodent_table_yearly()
 # write.csv(rodent_yr_table,'Rodent_yearly_avg.csv',row.names=F)
@@ -27,7 +25,7 @@ library(vegan)
 #' @return table of rodent species counts by year
 #' 
 rodent_table_julys = function() {
-  rodents = read.csv(text=getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/Portal_rodent.csv"),
+  rodents = read.csv(text=RCurl::getURL("https://raw.githubusercontent.com/weecology/PortalData/master/Rodents/Portal_rodent.csv"),
                      na.strings=c(""), colClasses=c('tag'='character'), stringsAsFactors = FALSE)
   Julys = c(1,13,24,36,47,60,70,80,91,101,113,124,136,149,161,173,185,197,210,222,233,245,256,266,279,290,302,314,325,338,350,363,375,386,395,407,418,427)
   
@@ -60,39 +58,45 @@ rodent_table_julys = function() {
 }
 
 
-#' @title create table of rodent data: averaged over 4 summer months
+#' @title create table of rodent count data: averaged over 4 summer months
 #' 
 #' @param 
 #' 
-#' @return table of rodent species counts by year
+#' @return table of rodent species counts by year (1978-2015), average for summer months, control plots only
 #' 
 rodent_table_summers = function() {
-  rodents = abundance('..',level='Plot',time='date',shape='flat',incomplete=T)
-  rodent_control = filter(rodents,plot %in% c(2,11,14,22))
+  rodents = abundance('..',level='Plot',time='date',shape='flat',clean=F,min_plots=23,na_drop=T)
+  rodent_control = filter(rodents,plot %in% c(2,4,8,11,12,14,17,22))
   rodent_control$month = format(rodent_control$censusdate,'%m')
   rodent_control$year = format(rodent_control$censusdate,'%Y')
   rodent_control$summer = rep(NA)
   rodent_control$summer[rodent_control$month %in% c('06','07','08','09')]=1
   
   #rodent_summer = filter(rodent_control,summer==1,year %in% c(1977:1986,1988:1994,1998:2009))
-  rodent_summer = filter(rodent_control,summer==1)
-  rodent_summer_avg = aggregate(rodent_summer$abundance,by=list(species=rodent_summer$species,
-                                                                year=rodent_summer$year),FUN=mean,na.rm=T)
+  rodent_summer = filter(rodent_control,summer==1,year>1977,year<2015)
+  rodent_summer_tot = aggregate(rodent_summer$abundance,by=list(censusdate=rodent_summer$censusdate,species=rodent_summer$species,
+                                                                year=rodent_summer$year),FUN=sum)
+  #n_summer_censuses = aggregate(rodent_summer_tot$censusdate,by=list(year=rodent_summer_tot$year),FUN=unique)
+  rodent_summer_avg = aggregate(rodent_summer_tot$x,by=list(species=rodent_summer_tot$species,
+                                                            year=rodent_summer_tot$year),FUN=mean)
   
   rodent_summer_table = make_crosstab(rodent_summer_avg,variable_name='x')
-  rodent_summer_table$index = rep(NA)
-  for (n in 1:length(rodent_summer_table$index)) {
-    rodent_summer_table$index[n] = paste0(rodent_summer_table$year[n],'-',rodent_summer_table$plot[n])
-  }
+  #rodent_summer_table$index = rep(NA)
+  #for (n in 1:length(rodent_summer_table$index)) {
+  #  rodent_summer_table$index[n] = paste0(rodent_summer_table$year[n],'-',rodent_summer_table$plot[n])
+  #}
   
   # remove species that have only one capture ever -- so extremely rare species don't have too much influence on results
   rodent_summer_table = rodent_summer_table[,!names(rodent_summer_table) %in% c('PH','PI','PL','RF','RO','SO')]
   
   # put rows in order
-  rodent_summer_table = rodent_summer_table[order(rodent_summer_table$year,rodent_summer_table$plot),]
+  rodent_summer_table = rodent_summer_table[order(rodent_summer_table$year),]
+  #rodent_summer_table = rodent_summer_table[order(rodent_summer_table$year,rodent_summer_table$plot),]
   
   # put columns in order
-  rodent_summer_table = rodent_summer_table[,c(18,3:17)]
+  #rodent_summer_table = rodent_summer_table[,c(18,3:17)]
+  # round to nearest integer
+  rodent_summer_table[,-1] = round(rodent_summer_table[,-1])
   return(rodent_summer_table)
 }
 
@@ -268,10 +272,47 @@ winter_annual_byplot = function(selected_plots, dist_method='bray') {
     return(winter_distance)
 }
 
-
-distance_timeseries = function() {
+#' @title get perennial plant data
+#' 
+#' @param selected_plots plot numbers: 1-24
+#' @param dist_method distance method for vegdist function (vegan package)
+#' 
+#' @return table of plant counts by species, at plot level
+#'
+perennial_byplot = function(selected_plots, dist_method='bray') {
+  plant_data = plant_abundance('..',level='Plot',type='Non-woody',
+                               correct_sp=T,unknowns=F,length='all',
+                               shape='flat')
+  # remove data before 1983 to avoid having to adjust by quadrat area per plot
+  winter_data = filter(plant_data,season=='winter',year>1982)
   
+  # find species that occurred in >2% of samples (plots)
+  nsamples_W = dplyr::select(winter_data,year,season,plot) %>% unique() %>% nrow()
+  sp_table_W = table(winter_data$species)
+  splist_W = sp_table_W[sp_table_W > (nsamples_W * .02)] %>% names()
+  
+  # filter based on species and selected_plots
+  winterplants = filter(winter_data,species %in% splist_W,plot %in% select_plots)
+  wintertable = make_crosstab(winterplants,variable_name='abundance')
+  wintertable[is.na(wintertable)] <- 0
+  
+  # calculate distance for each plot
+  winter_distance = data.frame()
+  for (plt in selected_plots) {
+    plt_dat = filter(wintertable, plot==plt)
+    init_yr = plt_dat[plt_dat$year==min(plt_dat$year),-c(1:4)]
+    D=data.frame()
+    for (yr in plt_dat$year) {
+      d = vegan::vegdist(rbind(init_yr, plt_dat[plt_dat$year==yr,-c(1:4)]),method='bray')
+      D = rbind(D,c(plt,yr,d))
+    }
+    names(D) = c('plot','year','dist')
+    winter_distance = rbind(winter_distance,D)
+  }
+  return(winter_distance)
 }
+
+
 
 # =====================
 # ants: abundance; from bait data, just granivorous species
