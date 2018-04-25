@@ -5,6 +5,11 @@ library(portalr)
 # ====================================================================================
 # Examples: write to csvs
 
+# Only 4 plots are definitely controls with respect to ants and rodents, 1977-2009 [2,11,14,22]
+# control plots w.r.t. just rodents: [2,4,8,11,12,14,17,22]
+# control plots w.r.t. just ants: [1,2,5,6,7,9,11,14,16,18,22,24]
+# control plots w.r.t. all three taxa: [11,14]
+
 # rod_table = rodent_table_julys()
 # write.csv(rod_table,'Rodent_julys.csv',row.names=F,quote=F)
 
@@ -14,8 +19,8 @@ library(portalr)
 # rodent_yr_table = rodent_table_yearly()
 # write.csv(rodent_yr_table,'Rodent_yearly_avg.csv',row.names=F)
 
-# dat_table = ant_colony_presence()
-# write.csv(dat_table,'Ant_colony_numstakes.csv',row.names=F)
+# ant_table = ant_colony_presence(selected_plots=c(2,11,14,22))
+# write.csv(ant_table,'Ant_colony_presence.csv',row.names=F)
 
 # =====================================================================================
 #' @title create table of rodent data: just July censuses
@@ -184,26 +189,28 @@ rodent_table_yearly = function() {
 #' 
 #' @description get ant species presence/absence from colony data -- plot level
 #' 
-#' @param 
+#' @param selected_plots which plots to include in analysis
 #' 
-ant_colony_presence = function() {
+ant_colony_presence = function(selected_plots) {
   colony_stake = colony_presence_absence(level='Stake',rare_sp=T)
   
-  # Only 4 plots are definitely controls with respect to ants and rodents, 1977-2009
-  controls = filter(colony_stake,plot %in% c(2,11,14,22))
+  controls = filter(colony_stake,plot %in% selected_plots)
   control_agg = aggregate(controls$presence,by=list(year = controls$year, 
                                                     plot = controls$plot, 
                                                     species = controls$species), FUN=sum,na.rm=T)
   control_agg$index = paste(control_agg$year,control_agg$plot,sep='-')
+  control_avg = aggregate(control_agg$x,by=list(year=control_agg$year,
+                                                species=control_agg$species),FUN=mean)
   
-  dat = select(control_agg,index,species,x)
-  dat_table = reshape(dat,idvar='index',timevar='species',direction='wide')
+  dat_table = reshape(control_avg,idvar='year',timevar='species',direction='wide')
   
   # remove phei yell
   dat_table = dat_table[,names(dat_table) != 'x.phei yell']
   
   # put rows in order
-  dat_table = dat_table[order(dat_table$index),]
+  dat_table = dat_table[order(dat_table$year),]
+  # round to nearest integer
+  dat_table[,-1] = round(dat_table[,-1])
   return(dat_table)
 }
 
