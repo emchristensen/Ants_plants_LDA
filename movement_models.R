@@ -23,8 +23,8 @@ source('create_data_tables.R')
 source('movement_model_functions.R')
 
 
-# do analysis with rodent data
-rodentsummer = rodent_dist_summers(selected_plots=c(2,11,14,22),dist_method = 'bray')
+# do analysis with rodent data (there's basically no change if you remove rare species)
+rodentsummer = rodent_dist_summers(selected_plots=c(2,4,8,11,12,14,17,22),dist_method = 'bray')
 
 
 rodentsummer$nYrs <- rodentsummer$year - min(rodentsummer$year)
@@ -45,13 +45,20 @@ rodentsummer$abrupt_gnls <- unlist(fitted(disp.Mod))
 plot_fits(rodentsummer)
 
 # obtain aic from each model
-quad_aic = data.frame(plot.id=plots[k],
+rodent_aic = data.frame(plot.id=NA,
                       aic_nomad=AIC(nomad.Mod),
                       #aic_migr=AIC(migr.Mod),
                       aic_stab=AIC(stab.Mod),
                       aic_disp=AIC(disp.Mod))
-quad_aic
+rodent_aic
+# calculate cc-score from each model
+rodent_cc = data.frame(plot.id=NA,
+                     cc_nomad=calc_cc_score(rodentsummer,'nomad_gnls'),
+                     #cc_migr=calc_cc_score(rodentsummer,'mig_gnls'),
+                     cc_stab=calc_cc_score(rodentsummer,'stab_gnls'),
+                     cc_disp=calc_cc_score(rodentsummer,'abrupt_gnls'))
 
+rodent_cc
 
 # -----------------------------------------------------------------
 # portal plant data
@@ -60,9 +67,58 @@ quad_aic
 #select_plots = c(11,14)
 # control plots w.r.t ants and rodents 1977-2015
 select_plots = c(2,11,14,22)
+# plots that are rodent controls and not "annual removals"
+select_plots = c(8,11,12,14,17)
 
 #summertable = summer_annual_byplot(select_plots)
 wintertable = winter_annual_byplot(select_plots,dist_method='bray')
+plots = unique(wintertable$plot)
+
+allquads = data.frame()
+aictable = data.frame()
+cctable = data.frame()
+for(k in seq(1:length(plots))){
+  quad<-wintertable[wintertable$plot == plots[k],]
+  quad$nYrs <- quad$year - min(quad$year)
+  # gradual linear dynamics
+  nomad.Mod <- gradual_linear_dyn(quad)
+  quad$nomad_gnls <- unlist(fitted(nomad.Mod))
+  # reversible dynamics
+  migr.Mod <- reversible_dyn(quad)
+  quad$mig_gnls <- unlist(fitted(migr.Mod))
+  # stable dynamics
+  stab.Mod = stable_dyn(quad)
+  quad$stab_gnls <- unlist(fitted(stab.Mod))
+  # abrupt shift
+  disp.Mod = abrupt_dyn(quad)
+  quad$abrupt_gnls <- unlist(fitted(disp.Mod))
+  
+  # look at data with 4 different model fits
+  plot_fits(quad)
+  
+  # put together results into one big dataframe
+  allquads = rbind(allquads,quad)
+  
+  # obtain aic from each model
+  quad_aic = data.frame(plot.id=plots[k],
+                        aic_nomad=AIC(nomad.Mod),
+                        aic_migr=AIC(migr.Mod),
+                        aic_stab=AIC(stab.Mod)) #,
+                        aic_disp=AIC(disp.Mod))
+  aictable = rbind(aictable,quad_aic)
+  
+  # calculate cc-score from each model
+  quad_cc = data.frame(plot.id=plots[k],
+                       cc_nomad=calc_cc_score(quad,'nomad_gnls'),
+                       cc_migr=calc_cc_score(quad,'mig_gnls'),
+                       cc_stab=calc_cc_score(quad,'stab_gnls')) #,
+                       cc_disp=calc_cc_score(quad,'abrupt_gnls'))
+  cctable = rbind(cctable,quad_cc)
+}
+
+
+
+
 
 #write.csv(wintertable,'winterannuals.csv',row.names=F)
 

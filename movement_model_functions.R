@@ -80,17 +80,34 @@ abrupt_dyn= function(quad) {
   return(disp.Mod)
 }
 
+#' @title calculate cc score
+#' 
+#' @param quad data frame containing 'dist' column as well as model fit columns
+#' @param model_column_name name of column (chr) for which to calculate cc score
+#'
+#'
+calc_cc_score = function(quad,model_column_name) {
+  d = quad$dist
+  model.est = quad[,model_column_name]
+  num <- sum((d - model.est)^2)
+  denom1 <- sum((d - mean(model.est))^2)
+  denom2 <- sum((model.est - mean(model.est))^2)
+  denom3 <- length(d)*(mean(d) - mean(model.est))^2
+  cc <- 1-((num)/(denom1+denom2+denom3))
+  return(cc)
+}
+
 #' @title plot_fits
 #' @description plot data for single plot as well as the 4 different fits
 #' 
 #' 
 plot_fits = function(df) {
-  plot(df$year,df$dist,type='b',ylim=c(0,1))
+  plot(df$year,df$dist,type='b',ylim=c(0,1),ylab='Community Distance',xlab='')
   lines(df$year,df$nomad_gnls,col='red')
   lines(df$year,df$mig_gnls,col='blue')
   lines(df$year,df$stab_gnls,col='forestgreen')
   lines(df$year,df$abrupt_gnls,col='purple')
-  legend(2000,.4, legend=c('data','nomad/linear','migration','stable','abrupt change'),
+  legend(2000,.3, legend=c('data','linear','migration','stable','abrupt change'),
          col=c('black','red','blue','forestgreen','purple'), lty=1, cex=0.8)
   
 }
