@@ -1,6 +1,5 @@
 library(dplyr)
 library(portalr)
-#library(RCurl)
 
 # ====================================================================================
 # Examples: write to csvs
@@ -21,6 +20,12 @@ library(portalr)
 
 # ant_table = ant_colony_presence(selected_plots=c(2,11,14,22))
 # write.csv(ant_table,'Ant_colony_presence.csv',row.names=F)
+
+# winterannuals = seasonal_annual_table(selected_plots=c(2,4,8,11,12,14,17,22),'winter')
+# write.csv(winterannuals,'WinterAnnuals.csv',row.names=F)
+
+# summerannuals = seasonal_annual_table(selected_plots=c(2,4,8,11,12,14,17,22),'summer')
+# write.csv(summerannuals,'SummerAnnuals.csv',row.names=F)
 
 # =====================================================================================
 #' @title create table of rodent data: just July censuses
@@ -173,7 +178,7 @@ rodent_table_yearly = function() {
     rodent_yr_table$index[n] = paste0(rodent_yr_table$year[n],'-',rodent_yr_table$plot[n])
   }
   
-  # remove species that have only one capture ever -- so extremely rare species don't have too much influence on results
+  # remove species that are too rare
   #rodent_yr_table = rodent_yr_table[,!names(rodent_yr_table) %in% c('PH','PI','PL','RF','RO','SO')]
   
   # put rows in order
@@ -239,14 +244,56 @@ summer_annual_byplot = function(selected_plots) {
   return(summertable)
 }
 
-#' @title get winter annual plant data
+#' @title get winter or summer annual plant data: crosstab
+#' 
+#' @param selected_plots plot numbers: 1-24
+#' @param summer_winter 'summer' or 'winter' census
+#' 
+#' @return table of plant counts by species
+#'
+seasonal_annual_table = function(selected_plots,summer_winter) {
+  plant_data = plant_abundance('..',level='Plot',type='Annuals',
+                               correct_sp=T,unknowns=F,length='all',
+                               shape='flat')
+  # remove data before 1983 to avoid having to adjust by quadrat area per plot; stop at 2015 to avoid plot switch
+  season_data = filter(plant_data,season==summer_winter,year>1982,year<2015)
+  
+  # find species that occurred in >10% of years
+  transients = find_transient_species(season_data,threshhold=.1)
+  
+  # filter based on selected_plots, remove transient species
+  seasonplants = filter(season_data,plot %in% select_plots, !(species %in% transients$species))
+  # sum by year (efford doesn't vary by year)
+  seasontotal = aggregate(seasonplants$abundance,by=list(year=seasonplants$year,species=seasonplants$species),FUN=sum)
+  seasontable = portalr::make_crosstab(seasontotal,variable_name='x')
+  seasontable[is.na(seasontable)] <- 0
+  return(seasontable)
+}
+
+
+#' @title find transient species
+#'
+#' @description identifies species found in <=10% of sampling events
+#'
+#' @param data_table table of data including species and year
+#' @param threshhold value for determining transient. Default 10%
+#'
+find_transient_species = function(data_table,threshhold=0.1) {
+  ntimesteps = dplyr::select(data_table,year) %>% unique() %>% nrow()
+  sp_time = dplyr::select(data_table,year,species) %>% unique()
+  yrs_present = dplyr::count(sp_time,species)
+  transient_names = dplyr::filter(yrs_present,n <= threshhold*ntimesteps) %>% select(species)
+  return(transient_names)
+}
+
+#' @title get winter annual plant data: 'distance' from initial year
 #' 
 #' @param selected_plots plot numbers: 1-24
 #' @param dist_method distance method for vegdist function (vegan package)
 #' 
 #' @return table of plant counts by species, at plot level
 #'
-winter_annual_byplot = function(selected_plots, dist_method='bray') {
+winter_annual_distance = function(selected_plots, dist_method='bray') {
   plant_data = plant_abundance('..',level='Plot',type='Annuals',
                                correct_sp=T,unknowns=F,length='all',
                                shape='flat')
