@@ -5,7 +5,7 @@ library(gridExtra)
 library(dplyr)
 
 
-
+cbPalette <- c( "#e19c02","#999999", "#56B4E9", "#0072B2", "#D55E00", "#F0E442", "#009E73", "#CC79A7")
 
 
 #' Plot gamma
@@ -48,7 +48,7 @@ plot_gamma = function(gamma_frame,ntopics,ylab='') {
 
 plot_component_communities = function(ldamodel,ntopics,xticks,ylab='',topic_order = seq(ntopics)) {
   
-  z = posterior(ldamodel)
+  z = topicmodels::posterior(ldamodel)
   ldaplot = data.frame(date=c(),relabund = c(), community = c())
   for (t in topic_order) {
     ldaplot = rbind(ldaplot,data.frame(date=xticks,relabund=z$topics[,t],community = as.factor(rep(t,length(z$topics[,1])))))
@@ -83,50 +83,6 @@ chpoint_histogram = function(results,year_continuous) {
   return(h)
 }
 
-
-
-#' Plot component communities -- smoothed
-#' 
-#' Plots timeseries of component communities (topics)
-#' Smooths using a simple moving window average
-#' Plots raw data as dots, smoothed as lines
-#' 
-#' @param ldamodel object of class LDA_VEM created by the function LDA in topicmodels package
-#' @param ntopics number of topics used in ldamodel
-#' @param xticks vector of dates for x-axis labels
-#' @param smooth_factor size of moving window average -- higher value is smoother
-#' 
-#' @return None
-#' 
-#' @example plot_component_communities_smooth(ldamodel,ntopics,period_dates$date,5)
-
-plot_component_communities_smooth = function(ldamodel,ntopics,xticks,smooth_factor) {
-  
-  z = posterior(ldamodel)
-  ldaplot = data.frame(date=c(),relabund = c(), community = c())
-  for (t in seq(ntopics)) {
-    ldacomm = data.frame(date=xticks,relabund=z$topics[,t],community = as.factor(rep(t,length(z$topics[,1]))))
-    ldacomm$smooth = rep(NA)
-    for (n in seq(length(ldacomm$smooth)-smooth_factor)) {
-      ldacomm$smooth[n+floor(smooth_factor/2)] = mean(ldacomm$relabund[n:(n+smooth_factor)])
-    }
-    ldaplot = rbind(ldaplot,ldacomm)
-  }
-  
-  ggplot(ldaplot, aes(x=date,y=relabund,colour=community)) + 
-    geom_point() +
-    geom_line(size=1,aes(y=smooth)) +
-    scale_y_continuous(name='Relative Abundance') +
-    scale_x_date(name='') +
-    theme(axis.text=element_text(size=18),
-          axis.title=element_text(size=18),
-          legend.text=element_text(size=18),
-          legend.title=element_text(size=18)) +
-    scale_colour_manual(name="Component \nCommunity",
-                        breaks=as.character(seq(ntopics)),
-                        values=cbPalette[1:ntopics])
-  
-}
 
 
 #' Make table of species composition of topics
@@ -174,7 +130,7 @@ plot_community_composition = function(composition,topic_order=1:dim(composition)
 #' 
 #' 
 #' 
-plot_community_composition_gg = function(composition,topic_order,ylim) {
+plot_community_composition_gg = function(composition,topic_order=1:dim(composition)[1],ylim=c(0,1)) {
   topics = dim(composition)[1]
   community = c()
   for (j in 1:topics) {community=append(community,rep(j,length(composition[j,])))}

@@ -4,15 +4,15 @@ library(portalr)
 # ====================================================================================
 # Examples: write to csvs
 
-# Only 4 plots are definitely controls with respect to ants and rodents, 1977-2009 [2,11,14,22]
 # control plots w.r.t. just rodents: [2,4,8,11,12,14,17,22]
 # control plots w.r.t. just ants: [1,2,5,6,7,9,11,14,16,18,22,24]
-# control plots w.r.t. all three taxa: [11,14]
+# control plots w.r.t. ants and rodents: [2,11,14,22]
+# control plots w.r.t. plants (and also all three taxa): [11,14]
 
 # rod_table = rodent_table_julys()
 # write.csv(rod_table,'Rodent_julys.csv',row.names=F,quote=F)
 
-# rodent_summer_table = rodent_table_summers()
+# rodent_summer_table = rodent_table_summers(selected_plots=c(2,4,8,11,12,14,17,22))
 # write.csv(rodent_summer_table,'Rodent_summer_table.csv',row.names=F)
 
 # rodent_yr_table = rodent_table_yearly()
@@ -21,19 +21,19 @@ library(portalr)
 # ant_table = ant_colony_presence(selected_plots=c(2,11,14,22))
 # write.csv(ant_table,'Ant_colony_presence.csv',row.names=F)
 
- winterannuals = seasonal_plant_table(selected_plots=c(2,4,8,11,12,14,17,22),
-                                       plant_community='Annuals',
-                                       summer_winter='winter')
+# winterannuals = seasonal_plant_table(selected_plots=c(2,4,8,11,12,14,17,22),
+#                                       plant_community='Annuals',
+#                                       summer_winter='winter')
 # write.csv(winterannuals,'WinterAnnuals.csv',row.names=F)
 
- summerannuals = seasonal_plant_table(selected_plots=c(2,4,8,11,12,14,17,22),
-                                       plant_community='Annuals',
-                                       summer_winter='summer')
+# summerannuals = seasonal_plant_table(selected_plots=c(2,4,8,11,12,14,17,22),
+#                                       plant_community='Annuals',
+#                                       summer_winter='summer')
 # write.csv(summerannuals,'SummerAnnuals.csv',row.names=F)
 
- perennials = seasonal_plant_table(selected_plots=c(2,4,8,11,12,14,17,22),
-                                   plant_community='Perennials',
-                                   summer_winter='both')
+# perennials = seasonal_plant_table(selected_plots=c(2,4,8,11,12,14,17,22),
+#                                   plant_community='Perennials',
+#                                   summer_winter='both')
 # write.csv(perennials,'Perennials.csv',row.names=F)
 
 # =====================================================================================
@@ -79,34 +79,29 @@ rodent_table_julys = function() {
 
 #' @title create table of rodent count data: averaged over 4 summer months
 #'
-#' @param
+#' @param selected_plots vector of plots to include in analysis
 #'
 #' @return table of rodent species counts by year (1978-2015), average for summer months, control plots only
 #'
-rodent_table_summers = function() {
+rodent_table_summers = function(selected_plots) {
   rodents = abundance('..',level='Plot',time='date',shape='flat',clean=F,min_plots=23,na_drop=T)
-  rodent_control = filter(rodents,plot %in% c(2,4,8,11,12,14,17,22))
+  rodent_control = filter(rodents,plot %in% selected_plots)
   rodent_control$month = format(rodent_control$censusdate,'%m')
   rodent_control$year = format(rodent_control$censusdate,'%Y')
   rodent_control$summer = rep(NA)
   rodent_control$summer[rodent_control$month %in% c('06','07','08','09')]=1
 
-  #rodent_summer = filter(rodent_control,summer==1,year %in% c(1977:1986,1988:1994,1998:2009))
   rodent_summer = filter(rodent_control,summer==1,year>1977,year<2015)
   rodent_summer_tot = aggregate(rodent_summer$abundance,by=list(censusdate=rodent_summer$censusdate,species=rodent_summer$species,
                                                                 year=rodent_summer$year),FUN=sum)
-  #n_summer_censuses = aggregate(rodent_summer_tot$censusdate,by=list(year=rodent_summer_tot$year),FUN=unique)
   rodent_summer_avg = aggregate(rodent_summer_tot$x,by=list(species=rodent_summer_tot$species,
                                                             year=rodent_summer_tot$year),FUN=mean)
 
-  rodent_summer_table = make_crosstab(rodent_summer_avg,variable_name='x')
-  #rodent_summer_table$index = rep(NA)
-  #for (n in 1:length(rodent_summer_table$index)) {
-  #  rodent_summer_table$index[n] = paste0(rodent_summer_table$year[n],'-',rodent_summer_table$plot[n])
-  #}
+  rodent_summer_table = portalr::make_crosstab(rodent_summer_avg,variable_name='x')
 
   # remove species that have only one capture ever -- so extremely rare species don't have too much influence on results
   rodent_summer_table = rodent_summer_table[,!names(rodent_summer_table) %in% c('PH','PI','PL','RF','RO','SO')]
+  
 
   # put rows in order
   rodent_summer_table = rodent_summer_table[order(rodent_summer_table$year),]
@@ -277,7 +272,7 @@ seasonal_plant_table = function(selected_plots,plant_community,summer_winter) {
 
   # filter based on selected_plots, remove transient species
   seasonplants = filter(season_data,plot %in% selected_plots, !(species %in% transients$species))
-  # sum by year (efford doesn't vary by year)
+  # sum by year (effort doesn't vary by year)
   seasontotal = aggregate(seasonplants$abundance,by=list(year=seasonplants$year,season=seasonplants$season,species=seasonplants$species),FUN=sum)
   seasontable = portalr::make_crosstab(seasontotal,variable_name='x')
   seasontable[is.na(seasontable)] <- 0
