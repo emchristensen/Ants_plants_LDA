@@ -40,7 +40,7 @@ wann_lda = dplyr::select(winterann,-c(year))
 sann_lda = dplyr::select(summerann,-c(year))
 
 # ======================================================================================
-# setup parameters
+# LDA model -- setup parameters
 nseeds = 2
 ncores = 4
 data = lda_data
@@ -65,48 +65,63 @@ plot_component_communities(selected_lda,ntopics = ntopics,xticks = ts_data$time)
 source('changepoint_model.R')
 
 
-# set up parameters for model
+# set up parameters for model -- rodents
 year_continuous = 1970 + as.integer(julian(dates)) / 365.25
 x = data.frame(
   year_continuous = year_continuous,
   sin_year = sin(year_continuous * 2 * pi),
   cos_year = cos(year_continuous * 2 * pi)
 )
-
 pop_matrix = as.matrix(lda_data)
-
 # timeseries matrix
 #ts_matrix = selected_lda@gamma
 ts_matrix = pop_matrix
 weights = rep(1,length(year_continuous))
 
+
+# set up parameters for model -- winter annuals
+year_continuous = winterann$year
+x = data.frame(
+  year_continuous = year_continuous,
+  sin_year = sin(year_continuous * 2 * pi),
+  cos_year = cos(year_continuous * 2 * pi)
+)
+ts_matrix = winterann[,!names(winterann)=='year'] %>% as.matrix()
+weights = rep(1,length(x$year_continuous))
+
+
+
 # run models with 1:6 changepoints
 cp_results_rodent = list()
+cp_results_winterann = list()
 i = 1
 for (npts in 1:6) {
   cp_results = changepoint_model(ts_matrix, x, npts, weights = weights)
-  cp_results_rodent[[i]] = cp_results
+  cp_results_winterann[[i]] = cp_results
   i = i + 1
 }
 
 
+
+# ============================================================
 # change point model selection
 # mean deviance ( -2 * log likelihood) + 2*(#parameters)
 nvars = dim(ts_matrix)[2]
 
-for (n in 1:length(cp_results_rodent)) {
-  npoints = dim(cp_results_rodent[[n]]$saved)[1]
-  mean_dev = mean(cp_results_rodent[[n]]$saved_lls * -2) + 2*(3*(nvars-1)*(npoints+1)+(npoints))
+for (n in 1:length(cp_results_winterann)) {
+  npoints = dim(cp_results_winterann[[n]]$saved)[1]
+  mean_dev = mean(cp_results_winterann[[n]]$saved_lls * -2) + 2*(3*(nvars-1)*(npoints+1)+(npoints))
   print(c(npoints,mean_dev))
 }
 
 # best model is one with lowest mean deviation
 cp_rodent = cp_results_rodent[[5]]
-
+cp_winterann = cp_results_winterann[[4]]
 # ========================================================================================
 # some quick histograms of changepoint model results
 hist(year_continuous[cp_rodent$saved[,1,]],breaks = seq(1977,2016,.25),xlab='',main='Changepoint Estimate')
 annual_hist(cp_rodent,year_continuous)
+annual_hist(cp_winterann,year_continuous)
 
 # turn changepoint results into data frame
 df = as.data.frame(t(cp_rodent$saved[,1,])) %>% reshape2::melt()
