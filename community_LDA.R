@@ -121,4 +121,4 @@ quantile(df[df$variable=='V4','value'],probs=c(.025,.975)) %>% lubridate::date_d
 # time series plots
 cpts = find_changepoint_location(cp_rodent)
 cpt_plot = get_ll_non_memoized_plot(ts_matrix,x,cpts,weights=weights)
-cpt_plot
+
