@@ -1,7 +1,7 @@
 # Main function for doing LDA on different data sets
 # using LDATS package
 
-#devtools::install_github("weecology/LDATS")
+devtools::install_github("weecology/LDATS")
 
 library(LDATS)
 library(dplyr)
@@ -60,10 +60,10 @@ plot_community_composition(composition)
 plot_component_communities(selected_lda,ntopics = ntopics,xticks = ts_data$time)
 
 # ======================================================================================
-# changepoint analysis (from Extreme-events-LDA)
+# changepoint analysis (modified from Extreme-events-LDA)
 
 source('changepoint_model.R')
-#source('../Extreme-events-LDA/changepointmodel.r')
+
 
 # set up parameters for model
 year_continuous = 1970 + as.integer(julian(dates)) / 365.25
@@ -76,35 +76,49 @@ x = data.frame(
 pop_matrix = as.matrix(lda_data)
 
 # timeseries matrix
-ts_matrix = selected_lda@gamma
+#ts_matrix = selected_lda@gamma
 ts_matrix = pop_matrix
+weights = rep(1,length(year_continuous))
 
-# run models with 1, 2, 3, 4, 5 changepoints
-cp_results_rodent = changepoint_model(ts_matrix, x, 1, weights = rep(1,length(year_continuous)))
-cp_results_rodent2 = changepoint_model(selected_lda, x, 2, weights = rep(1,length(year_continuous)))
-cp_results_rodent3 = changepoint_model(selected_lda, x, 3, weights = rep(1,length(year_continuous)))
-cp_results_rodent4 = changepoint_model(selected_lda, x, 4, weights = rep(1,length(year_continuous)))
-cp_results_rodent5 = changepoint_model(selected_lda, x, 5, weights = rep(1,length(year_continuous)))
+# run models with 1:6 changepoints
+cp_results_rodent = list()
+i = 1
+for (npts in 1:6) {
+  cp_results = changepoint_model(ts_matrix, x, npts, weights = weights)
+  cp_results_rodent[[i]] = cp_results
+  i = i + 1
+}
 
-# some quick histograms of changepoint model results
-hist(year_continuous[cp_results_rodent$saved[,1,]],breaks = seq(1977,2016,.25),xlab='',main='Changepoint Estimate')
-annual_hist(cp_results_rodent4,year_continuous)
-
-# turn changepoint results into data frame
-df_4 = as.data.frame(t(cp_results_rodent4$saved[,1,])) %>% reshape::melt()
-df_4$value = year_continuous[df_4$value]
-
-# find 95% confidence intervals on each changepoint:
-quantile(df_4[df_4$variable=='V1','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
-quantile(df_4[df_4$variable=='V2','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
-quantile(df_4[df_4$variable=='V3','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
-quantile(df_4[df_4$variable=='V4','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
 
 # change point model selection
 # mean deviance ( -2 * log likelihood) + 2*(#parameters)
-mean(cp_results_rodent$saved_lls * -2) + 2*(3*(ntopics-1)*(1+1)+(1))
-mean(cp_results_rodent2$saved_lls * -2)+ 2*(3*(ntopics-1)*(2+1)+(2))
-mean(cp_results_rodent3$saved_lls * -2)+ 2*(3*(ntopics-1)*(3+1)+(3))
-mean(cp_results_rodent4$saved_lls * -2)+ 2*(3*(ntopics-1)*(4+1)+(4))
-mean(cp_results_rodent5$saved_lls * -2)+ 2*(3*(ntopics-1)*(5+1)+(5))
+nvars = dim(ts_matrix)[2]
 
+for (n in 1:length(cp_results_rodent)) {
+  npoints = dim(cp_results_rodent[[n]]$saved)[1]
+  mean_dev = mean(cp_results_rodent[[n]]$saved_lls * -2) + 2*(3*(nvars-1)*(npoints+1)+(npoints))
+  print(c(npoints,mean_dev))
+}
+
+# best model is one with lowest mean deviation
+cp_rodent = cp_results_rodent[[5]]
+
+# ========================================================================================
+# some quick histograms of changepoint model results
+hist(year_continuous[cp_rodent$saved[,1,]],breaks = seq(1977,2016,.25),xlab='',main='Changepoint Estimate')
+annual_hist(cp_rodent,year_continuous)
+
+# turn changepoint results into data frame
+df = as.data.frame(t(cp_rodent$saved[,1,])) %>% reshape2::melt()
+df$value = year_continuous[df$value]
+
+# find 95% confidence intervals on each changepoint:
+quantile(df[df$variable=='V1','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
+quantile(df[df$variable=='V2','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
+quantile(df[df$variable=='V3','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
+quantile(df[df$variable=='V4','value'],probs=c(.025,.975)) %>% lubridate::date_decimal() %>% format('%d-%m-%Y')
+
+# time series plots
+cpts = find_changepoint_location(cp_rodent)
+cpt_plot = get_ll_non_memoized_plot(ts_matrix,x,cpts,weights=weights)
+cpt_plot

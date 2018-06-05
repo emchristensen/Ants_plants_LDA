@@ -6,13 +6,9 @@ library(memoise)     # For avoiding redundante computations
 library(lubridate)   # For dates
 library(progress)    # For progress bar
 library(topicmodels) # For LDA
-#library(ggplot2)
-#library(viridis)
 library(nnet)        # For multinomial model (part of changepoint analysis)
-#library(RColorBrewer)
-#library(reshape2)
 
-cbPalette <- c( "#e19c02","#999999", "#56B4E9", "#0072B2", "#D55E00", "#F0E442", "#009E73", "#CC79A7")
+#cbPalette <- c( "#e19c02","#999999", "#56B4E9", "#0072B2", "#D55E00", "#F0E442", "#009E73", "#CC79A7")
 
 # Begin changepoint model -------------------------------------------------
 
@@ -101,7 +97,7 @@ fit_section = function(ts_matrix, x, start, end, weights, ...) {
   
   section_df = as.data.frame(fitted(m))
   section_df$date = format(date_decimal(x$year_continuous[x$year_continuous > start & x$year_continuous <= end]), '%Y-%m-%d') %>% as.Date()
-  section = reshape::melt(section_df,id.var='date')
+  section = reshape2::melt(section_df,id.var='date')
   return(section)
 }
 
@@ -118,6 +114,7 @@ plot_sections = function(all_sections,x,changepoints) {
   #cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#0072B2", "#009E73", "#F0E442", "#D55E00", "#CC79A7")
   datevec =  format(date_decimal(x$year_continuous), '%Y-%m-%d') %>% as.Date()
   cpt_dates = datevec[changepoints]
+  nvariables = length(unique(all_sections$variable))
   
   section_plot = ggplot(all_sections,aes=c(x=date,y=value,colour=variable)) +
     geom_line(aes(x=date,y=value,colour=variable,group=variable),size=1) +
@@ -127,8 +124,8 @@ plot_sections = function(all_sections,x,changepoints) {
           axis.title=element_text(size=12),
           panel.border=element_rect(colour='black',fill=NA)) +
     scale_colour_manual(name="Component\nCommunity",
-                        breaks=as.character(seq(ntopics)),
-                        values=cbPalette[1:ntopics],
+                        breaks=as.character(seq(nvariables)),
+                        values=cbPalette[1:nvariables],
                         guide=FALSE) +
     geom_vline(xintercept = as.numeric(cpt_dates),size=1.5)
   return(section_plot)
