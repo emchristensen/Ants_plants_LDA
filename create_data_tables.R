@@ -61,7 +61,7 @@ rodent_table_julys = function() {
   rod_byplot$index = paste(rod_byplot$year,rod_byplot$plot,sep='-')
 
   rod_dat = select(rod_byplot,index,species,x)
-  rod_table = make_crosstab(rod_dat,variable_name = 'x')
+  rod_table = portalr::make_crosstab(rod_dat,variable_name = 'x')
   rod_table[is.na(rod_table)] = 0
 
   # remove species that have only one capture ever -- so extremely rare species don't have too much influence on results
@@ -253,28 +253,29 @@ summer_annual_byplot = function(selected_plots) {
 #' @param selected_plots plot numbers: 1-24
 #' @param plant_community which plant community (e.g. annuals or perennials; input 'type' in plant_abundance function)
 #' @param summer_winter 'summer' or 'winter' census; or "both" for perennials
+#' @param threshold value used to remove "rare" or "transient" species from the table. For example, a threshold of .1 removes species that are present in less than 10% of sampling years
 #'
 #' @return table of plant counts by species
 #'
-seasonal_plant_table = function(selected_plots,plant_community,summer_winter) {
-  plant_data = plant_abundance('..',level='Plot',type=plant_community,
+seasonal_plant_table = function(selected_plots,plant_community,summer_winter,threshold=.1) {
+  plant_data = portalr::plant_abundance('..',level='Plot',type=plant_community,
                                correct_sp=T,unknowns=F,length='all',
                                shape='flat')
   # remove data before 1983 to avoid having to adjust by quadrat area per plot; stop at 2015 to avoid plot switch
 
-  season_data = filter(plant_data,year>1982,year<2015)
+  season_data = dplyr::filter(plant_data,year>1982,year<2015)
   if (tolower(summer_winter) %in% c('summer','winter')) {
     season_data = dplyr::filter(season_data,season==summer_winter)
   }
 
   # find species that occurred in >10% of years
-  transients = find_transient_species(season_data,threshhold=.1)
+  transients = find_transient_species(season_data,threshold)
 
   # filter based on selected_plots, remove transient species
   seasonplants = filter(season_data,plot %in% selected_plots, !(species %in% transients$species))
   # sum by year (effort doesn't vary by year)
   seasontotal = aggregate(seasonplants$abundance,by=list(year=seasonplants$year,season=seasonplants$season,species=seasonplants$species),FUN=sum)
-  seasontable = portalr::make_crosstab(seasontotal,variable_name='x')
+  seasontable = portalr:::make_crosstab(seasontotal,variable_name='x')
   seasontable[is.na(seasontable)] <- 0
   return(seasontable)
 }
@@ -285,13 +286,13 @@ seasonal_plant_table = function(selected_plots,plant_community,summer_winter) {
 #' @description identifies species found in <=10% of sampling events
 #'
 #' @param data_table table of data including species and year
-#' @param threshhold value for determining transient. Default 10%
+#' @param threshold value for determining transient. Default 10%
 #'
-find_transient_species = function(data_table,threshhold=0.1) {
+find_transient_species = function(data_table,threshold=0.1) {
   ntimesteps = dplyr::select(data_table,year) %>% unique() %>% nrow()
   sp_time = dplyr::select(data_table,year,species) %>% unique()
   yrs_present = dplyr::count(sp_time,species)
-  transient_names = dplyr::filter(yrs_present,n <= threshhold*ntimesteps) %>% select(species)
+  transient_names = dplyr::filter(yrs_present,n <= threshold*ntimesteps) %>% select(species)
   return(transient_names)
 }
 
