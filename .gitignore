@@ -1,4 +1,5 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 .Ruserdata
+Ants_plants_LDA_proj.Rproj
